@@ -45,6 +45,18 @@ public class pianoTiles {
         Tile[] tiles = new Tile[tileCount];
         //Tile test = new Tile(sc.getScene());
 
+        ClockWorker.addTask(new Task(1){
+           @Override
+           public void run() {
+               if (iteration() == 1){ //just to wait so sc has time to update (sc is used in create tile)
+                   for(int i=0; i<tileCount; i++){
+                       createTile(sc, tiles, i, w, h);
+                   }
+               }
+           }
+        });
+
+
         for(int i=0; i<tileCount; i++){
             createTile(sc, tiles, i, w, h);
         }
@@ -60,17 +72,35 @@ public class pianoTiles {
             }
         });
 
-        boolean fail = false;
-
+        //boolean fail = false;
         ClockWorker.addTask(new Task() {
             @Override
             public void run() {
-                if ((int)tiles[0].getY()/10 == (sc.getHeight()+h-250)/10) {
+                if ((int)tiles[0].getY()/10 == /*stopping point*/(int)(sc.getHeight()-h*2)/10) {
                     for(Tile t : tiles) {
                         t.setVelY(0);
                     }
                 }
+
             }});
+        ClockWorker.addTask(new Task(1){
+            @Override
+            public void run() {
+                ClockWorker.addTask(new Task() {
+                    double window = sc.getHeight();
+                    @Override
+                    public void run() {
+                        if(window != sc.getHeight()) {
+                            window = sc.getHeight();
+                            for(int i = 0; i<tileCount; i++) {
+                                tiles[i].setY(window-h*2-h*i);
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
 
         bf.show();
 
@@ -82,18 +112,17 @@ public class pianoTiles {
         tiles[i].pos = pos;
         tiles[i].setX(350+(w*pos));
         /*tiles[i].setY(400-(h*i));*/
-        tiles[i].setY(i < 1 ? sc.getHeight()-h/*offset from bottom*/ : tiles[i-1].getY() - h);
+        tiles[i].setY(i < 1 ? sc.getHeight()-h*2/*offset from bottom*/ : tiles[i-1].getY() - h);
 
     }
 
     public static void check(UI ui, SpriteComponent sc, Tile[] tiles, int w, int h, int pos){
         if(tiles[0].pos == pos){
-            System.out.println("correct!");
+            //System.out.println("correct!");
             tiles[0].destroy();
             for(int i=0; i<tiles.length-1; i++){
                 tiles[i] = tiles[i+1];
             }
-
 
             createTile(sc, tiles, tiles.length-1, w, h);
             for (Tile tile : tiles) {
